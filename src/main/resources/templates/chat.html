@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Chat Application</title>
+
+    <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.1/stomp.min.js"></script>
+
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+            background-color: #313338;
+            color: white;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 70px;
+            background: #1e1f22;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding-top: 10px;
+            flex-shrink: 0;
+        }
+
+        .server-icon {
+            width: 50px;
+            height: 50px;
+            background: #5865f2;
+            border-radius: 50%;
+            margin-bottom: 10px;
+        }
+
+        /* Channels */
+        .channels {
+            width: 220px;
+            background: #2b2d31;
+            padding: 10px;
+            flex-shrink: 0;
+        }
+
+        .channel {
+            padding: 8px;
+            border-radius: 5px;
+        }
+
+        /* Chat Section */
+        .chat-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
+        }
+
+        .chat-header {
+            padding: 15px;
+            border-bottom: 1px solid #444;
+        }
+
+        /* Chat scroll area */
+        #chat {
+            flex: 1;
+            overflow-y: auto;
+            padding: 15px;
+        }
+
+        /* Input area ALWAYS at bottom */
+        .input-area {
+            display: flex;
+            gap: 10px;
+            padding: 10px;
+            background: #383a40;
+        }
+
+        /* Inputs */
+        .input-area input {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            border-radius: 5px;
+            background: #1e1f22;
+            color: white;
+        }
+
+        /* Button small */
+        #sendMessage {
+            padding: 8px 14px;
+            background: #5865f2;
+            border: none;
+            border-radius: 5px;
+            color: white;
+            cursor: pointer;
+            flex-shrink: 0;
+        }
+
+        #sendMessage:hover {
+            background: #4752c4;
+        }
+    </style>
+</head>
+
+<body>
+
+<!-- Sidebar -->
+<div class="sidebar">
+    <div class="server-icon"></div>
+</div>
+
+<!-- Channels -->
+<div class="channels">
+    <div class="channel"># general</div>
+</div>
+
+<!-- Chat -->
+<div class="chat-container">
+    <div class="chat-header"># general</div>
+
+    <div id="chat"></div>
+
+    <div class="input-area">
+        <input id="senderInput" placeholder="Your name...">
+        <input id="messageInput" placeholder="Type a message...">
+        <button id="sendMessage">Send</button>
+    </div>
+</div>
+
+<script>
+    function setConnected(connected){
+       document.getElementById('sendMessage').disabled = !connected;
+    }
+
+    function showMessage(message){
+       var chat = document.getElementById('chat');
+       var messageElement = document.createElement('div');
+       messageElement.textContent = message.sender+ ':' + message.content;
+       messageElement.className = "mb-2";
+
+       chat.appendChild(messageElement)
+       chat.scrollTop = chat.scrollHeight;
+    }
+
+    function sendMessage(){
+      var sender=document.getElementById('senderInput').value;
+      var content =document.getElementById('messageInput').value;
+
+      var chatMessage = {
+         sender: sender,
+         content: content
+      }
+
+      stompClient.send("/app/sendMessage", {}, JSON.stringify(chatMessage));
+      document.getElementById('messageInput').value = '';
+    }
+
+    function connect(){
+       var socket=new SockJS('/chat');
+       stompClient = Stomp.over(socket);
+
+       stompClient.connect({}, function (frame){
+         setConnected(true);
+
+         stompClient.subscribe('/topic/messages', function (message){
+           showMessage(JSON.parse(message.body));
+         });
+       });
+    }
+
+    document.getElementById('sendMessage').onclick = sendMessage;
+    window.onload = connect;
+</script>
+
+</body>
+</html>
