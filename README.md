@@ -1,4 +1,4 @@
-# Real-Time-Messenger
+# Real-Time-Messenger Using Springboot 
 A simple real-time chat application built using **Spring Boot, WebSockets, STOMP, and SockJS** that allows multiple users to communicate instantly without refreshing the page.
 
 ---
